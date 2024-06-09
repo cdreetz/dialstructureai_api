@@ -9,10 +9,11 @@ audio_file_path = r"/Users/christianreetz/Desktop/call-center/backend_v1/data/40
 # Processing options as individual form fields
 data = {
     "align": "false",
-    "diarize": "false",
+    "diarize": "true",
+    "chat_transcription": "true",
     "summarize": "true",
-    "analyze_sentiment": "false",
-    "extract_keywords": "false"
+    "analyze_sentiment": "true",
+    "extract_keywords": "true"
 }
 
 # Send POST request

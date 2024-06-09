@@ -34,6 +34,7 @@ class AudioProcessingResponse(BaseModel):
 class ProcessingOptions(BaseModel):
     align: bool = False
     diarize: bool = False
+    chat_transcription: bool = False
     summarize: bool = False
     analyze_sentiment: bool = False
     extract_keywords: bool = False

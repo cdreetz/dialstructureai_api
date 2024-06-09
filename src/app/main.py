@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from typing import List, Optional
 from groq import Groq
+import pandas as pd
 import torchaudio
 import torch
 import asyncio
@@ -64,6 +65,22 @@ async def process_text_with_groq(text: str, prompt: str) -> str:
         logger.error(f"Error processing text with Groq: {e}")
         raise
 
+def format_diarization_result(diraization_result, transcription_result):
+    messages = []
+    for segment in diraization_result:
+        start_time = segment['start']
+        end_time = segment['end']
+        speaker = segment['speaker']
+
+        text_segment = ""
+        for t_segment in transcription_result['segments']:
+            if t_segment['start'] <= start_time and t_segment['end'] >= end_time:
+                text_segment = t_segment['text']
+                break
+        
+        messages.append({"role": speaker, "content": text_segment})
+    return messages
+
 
 @app.get("/health-check")
 async def health_check():
@@ -89,6 +106,7 @@ async def get_toy_data():
 async def process_audio(file: UploadFile = File(...), 
                         align: Optional[str] = Form(None),
                         diarize: Optional[str] = Form(None),
+                        chat_transcription: Optional[str] = Form(None),
                         summarize: Optional[str] = Form(None),
                         analyze_sentiment: Optional[str] = Form(None),
                         extract_keywords: Optional[str] = Form(None),
@@ -96,6 +114,7 @@ async def process_audio(file: UploadFile = File(...),
     options = ProcessingOptions(
         align=align.lower() == 'true' if align else False,
         diarize=diarize.lower() == 'true' if diarize else False,
+        chat_transcription=chat_transcription.lower() == 'true' if chat_transcription else False,
         summarize=summarize.lower() == 'true' if summarize else False,
         analyze_sentiment=analyze_sentiment.lower() == 'true' if analyze_sentiment else False,
         extract_keywords=extract_keywords.lower() == 'true' if extract_keywords else False,
@@ -136,8 +155,14 @@ async def process_audio(file: UploadFile = File(...),
             logger.info(f"Alignment completed in {time.time() - align_start_time:.2f} seconds.")
         if options.diarize:
             diarize_start_time = time.time()
-            response.diarization = pipeline.diarize_audio(tmp_path)
+            diarization_result = pipeline.diarize_audio(tmp_path)
+            if isinstance(diarization_result, pd.DataFrame):
+                diarization_result = diarization_result.to_dict(orient='records')
+            response.diarization = diarization_result
             logger.info(f"Diarization completed in {time.time() - diarize_start_time:.2f} seconds.")
+        if options.chat_transcription:
+            formatted_diarization_result = format_diarization_result(diarization_result, transcription_result)
+            response.chat_transcription = formatted_diarization_result
         if options.summarize:
             summarize_start_time = time.time()
             response.summary = await process_text_with_groq(transcribed_text, "Summarize this text: ")
@@ -148,7 +173,7 @@ async def process_audio(file: UploadFile = File(...),
             logger.info(f"Sentiment analysis completed in {time.time() - sentiment_start_time:.2f} seconds.")
         if options.extract_keywords:
             keywords_start_time = time.time()
-            keywords_result = await process_text_with_groq(transcribed_text, "Extract keywords from this text: ")
+            keywords_result = await process_text_with_groq(transcribed_text, "You're job is to extract keywords from a transcription that might be useful to search for later on. Your output should only be the keywords and nothing else. Do not explain anything, simply list the words. Extract keywords from this text: ")
             response.keywords = keywords_result.split()
             logger.info(f"Keyword extraction completed in {time.time() - keywords_start_time:.2f} seconds.")
 
