@@ -1,7 +1,7 @@
 import requests
 
 # URL of the FastAPI endpoint
-url = "http://127.0.0.1:8005/process-audio/"
+url = "http://127.0.0.1:8010/process-audio/"
 
 # Path to the audio file you want to process
 audio_file_path = r"/Users/christianreetz/Desktop/call-center/backend_v1/data/4074_30sec.mp3"
