@@ -61,6 +61,21 @@ class AudioProcessingApp:
       logging.error(f"Error processing text with Groq: {e}")
       raise
 
+  def format_diarization_result(self, diarization_result, transcription_result):
+    messages = []
+    for segment in diarization_result:
+      start_time = segment['start']
+      end_time = segment['end']
+      speaker = segment['speaker']
+
+      text_segment = ""
+      for t_segment in transcription_result['segments']:
+        if t_segment['start'] <= start_time and t_segment['end'] >= end_time:
+          text_segment = t_segment['text']
+          break
+      messages.append({"role": speaker, "content": text_segment})
+    return messages
+
   def setup_routes(self):
     @self.app.get("/health-check")
     async def health_check():
@@ -132,7 +147,11 @@ class AudioProcessingApp:
           if isinstance(diarization_result, pd.DataFrame):
             diarization_result = diarization_result.to_dict(orient='records') 
           response.diarization = diarization_result
+          if options.chat_transcription:
+            formatted_diarization_result = self.format_diarization_result(diarization_result, transcription_result)
+            response.chat_transcription = formatted_diarization_result
           logging.info(f"Diarization completed in {time.time() - diarize_start_time:.2f} seconds.")
+
         if options.summarize:
           logging.info("Summarization option is enabled.")
           summarize_start_time = time.time()

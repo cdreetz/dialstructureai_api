@@ -1,7 +1,7 @@
 import requests
 
 # URL of the FastAPI endpoint
-url = "http://127.0.0.1:8010/process-audio/"
+url = "https://7a91-2600-1700-7b00-5e10-a128-b54f-abd9-33aa.ngrok-free.app/process-audio/"
 
 # Path to the audio file you want to process
 audio_file_path = r"/Users/christianreetz/Desktop/call-center/backend_v1/data/4074_30sec.mp3"
