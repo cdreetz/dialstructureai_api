@@ -70,9 +70,9 @@ class AudioProcessingApp:
 
       text_segment = ""
       for t_segment in transcription_result['segments']:
-        if t_segment['start'] <= start_time and t_segment['end'] >= end_time:
-          text_segment = t_segment['text']
-          break
+        if t_segment['start'] <= end_time and t_segment['end'] >= start_time:
+          text_segment += t_segment['text'] + " "
+
       messages.append({"role": speaker, "content": text_segment})
     return messages
 
