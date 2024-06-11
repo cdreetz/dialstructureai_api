@@ -3,7 +3,7 @@ import torchaudio
 
 pipeline = Pipeline.from_pretrained(
   "pyannote/speaker-diarization-3.1",
-  use_auth_token="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"
+  use_auth_token=""
 )
 
 audio_path = r"/Users/christianreetz/Desktop/call-center/backend_v1/data/4074_30sec.mp3"
