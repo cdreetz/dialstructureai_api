@@ -1,0 +1,72 @@
+# Version control
+.git/
+.gitignore
+
+# Configuration files
+.dockerignore
+Dockerfile
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+db.sqlite3
+.ipynb_checkpoints
+
+# Environment files
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+
+# Logs and data
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.seed
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js
+node_modules/
+
+# Development-specific files
+test/
+tests/
+*.spec.js
+*.test.js
+coverage/
+*.md
+examples/
+*.example
+README.md
+
+# Audio and model files (if not needed in the build)
+*.mp3
+*.wav
+*.flac
+*.mp4
+*.m4a
+models/
