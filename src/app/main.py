@@ -11,6 +11,9 @@ import torch
 import logging
 import time
 from groq import Groq
+from dotenv import load_dotenv
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class AudioProcessingApp:
@@ -20,6 +23,10 @@ class AudioProcessingApp:
         self.api_key = os.getenv("GROQ_API_KEY", None)
         if self.api_key is None:
             raise EnvironmentError("GROQ_API_KEY is required but not set in environment variables.")
+        
+        self.hf_api_key = os.getenv("HUGGINGFACE_API_KEY")
+        if self.hf_api_key is None:
+            raise EnvironmentError("HUGGINGFACE_API_KEY is required but not set in environment variables.")
         
         self.client = Groq(api_key=self.api_key)
         
@@ -35,7 +42,7 @@ class AudioProcessingApp:
             device = "cuda"
             compute_type = "float16"
         
-        pipeline = AudioProcessingPipeline(model_type="base", device=device, compute_type=compute_type)
+        pipeline = AudioProcessingPipeline(model_type="base", device=device, compute_type=compute_type, hf_api_key=self.hf_api_key)
         logging.info("Model preloaded at startup.")
         return pipeline
 
@@ -125,6 +132,8 @@ class AudioProcessingApp:
                 # Transcription
                 transcription_start_time = time.time()
                 transcription_result = self.pipeline.transcribe(tmp_path)
+                logging.debug(f"Transcription Result: {transcription_result}")
+
                 transcription_time = time.time() - transcription_start_time
                 logging.info(f"Transcription completed in {transcription_time:.2f} seconds.")
                 logging.info(f"Transcription result: {transcription_result}")
@@ -139,7 +148,7 @@ class AudioProcessingApp:
                 if options.diarize:
                     # Diarization
                     diarize_start_time = time.time()
-                    diarization_result = self.pipeline.diarize_audio(tmp_path, use_auth_token=self.api_key)
+                    diarization_result = self.pipeline.diarize_audio(tmp_path)
                     logging.info(f"Diarization completed in {time.time() - diarize_start_time:.2f} seconds.")
                     logging.info(f"Diarization result: {diarization_result}")
 
@@ -156,7 +165,8 @@ class AudioProcessingApp:
                     )
                 )
 
-                audio_length_seconds = sum(segment['end'] - segment['start'] for segment in transcription_result['segments'])
+                #audio_length_seconds = sum(segment['end'] - segment['start'] for segment in transcription_result['segments'])
+                audio_length_seconds = 99.99
 
                 response = AudioProcessingResponse(
                     filename=file.filename,
@@ -195,7 +205,7 @@ class AudioProcessingApp:
                 return response
 
             except Exception as e:
-                logging.error(f"Error processing audio: {e}")
+                logging.error(f"Error processing audio: {e}", exc_info=True)
                 raise HTTPException(status_code=500, detail=str(e))
             finally:
                 if tmp_path and os.path.exists(tmp_path):

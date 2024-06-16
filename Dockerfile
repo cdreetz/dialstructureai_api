@@ -1,34 +1,25 @@
-# Use a Python slim image as a base
-FROM python:3.12-slim as builder
+# Use an official Python runtime as a parent image
+FROM python:3.10-slim
 
-# Set environment variables to minimize layer sizes and disable pip cache
-ENV PIP_DEFAULT_TIMEOUT=100 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1
+# Set environment variables to minimize the image size and improve logging
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-WORKDIR /app
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
-# Install necessary system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends gcc libsndfile1 ffmpeg && \
-    rm -rf /var/lib/apt/lists/*
+# Install necessary system packages for audio processing and compilation
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc libsndfile1 ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Install Python dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy your Python application
-COPY ./src ./src
+# Copy the current directory contents into the container at /usr/src/app
+COPY src/ ./src/
 
-# Remove build dependencies if not needed anymore
-RUN apt-get purge -y --auto-remove gcc
-
-# Second stage: Setup runtime environment
-FROM python:3.12-slim
-
-WORKDIR /app
-
-# Copy from builder stage
-COPY --from=builder /app /app
-
-EXPOSE 80
-CMD ["uvicorn", "src.app.main:app", "--host", "0.0.0.0", "--port", "80"]
+# Run the Uvicorn server
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "src.app.main"]
